@@ -1,6 +1,7 @@
 # Object Detection
 **신발**
 <hr>
+
 - YOLO-5 - 코드만 존재
 - EfficientDet - 성능이 보장되며 논문, 코드로 존재 <- 선택
 
@@ -37,13 +38,14 @@
 
 <hr>
 
-##### Resolution(화질) 
+##### Resolution(화질), size
 - 보통 resolution과 size를 고정시키지만 이미지가 가까우면 resolution이 높고 멀면 resolution이 낮다
+- EfficientDet을 이용해서 이미지의 **size에 제한되지 않고** 어떤 size든 가능.
+
 ---------------
 > PANet, FPN 이후 
 > Bi-FPN 이해
 -------------
-EfficientDet을 이용해서 이미지의 **size에 제한되지 않고** 어떤 size든 가능.
 
 ##### Compound scaling
 1. depth
