@@ -55,6 +55,7 @@ class EfficientDet(nn.Module):
         self.criterion = FocalLoss()
 
     def forward(self, inputs):
+       
         if self.is_training:
             inputs, annotations = inputs
         else:
@@ -71,7 +72,8 @@ class EfficientDet(nn.Module):
             transformed_anchors = self.clipBoxes(transformed_anchors, inputs)
             scores = torch.max(classification, dim=2, keepdim=True)[0]
             scores_over_thresh = (scores > self.threshold)[0, :, 0]
-
+            print(scores_over_thresh)
+            # scores_over_thresh = (scores > 0.00004)[0, :, 0]
             if scores_over_thresh.sum() == 0:
                 print('No boxes to NMS')
                 # no boxes to NMS, just return

@@ -23,7 +23,7 @@ from PIL import Image
 class CocoDataset(Dataset):
     """Coco dataset."""
 
-    def __init__(self, root_dir, set_name='train2017', transform=None):
+    def __init__(self, root_dir, set_name='train', transform=None):
         """
         Args:
             root_dir (string): COCO directory.
@@ -33,18 +33,28 @@ class CocoDataset(Dataset):
         self.root_dir = root_dir
         self.set_name = set_name
         self.transform = transform
+        self.image_ids = []
+        folder_path = self.root_dir + '/' + self.set_name
+        os.chdir(folder_path)
+        files = os.listdir(folder_path)
 
-        self.coco = COCO(os.path.join(self.root_dir, 'annotations',
-                                      'instances_' + self.set_name + '.json'))
+        for f in files:  # 3129
+          if len(f) == 22: # .json
+            self.coco = COCO(os.path.join(folder_path, f))
+
         self.image_ids = self.coco.getImgIds()
-
+        if self.set_name == 'test' or self.set_name == 'val':
+          self.image_ids = self.image_ids[-100:]
+ 
         self.load_classes()
+        os.chdir('/content/drive/My Drive/EfficientDet.Pytorch')
 
     def load_classes(self):
         # load class names (name -> label)
-        categories = self.coco.loadCats(self.coco.getCatIds())
-        categories.sort(key=lambda x: x['id'])
-
+        # categories = self.coco.loadCats(self.coco.getCatIds())
+        # categories.sort(key=lambda x: x['id'])
+        categories = [{'id':0, 'name' : '운동화'}]
+    
         self.classes = {}
         self.coco_labels = {}
         self.coco_labels_inverse = {}
@@ -62,7 +72,6 @@ class CocoDataset(Dataset):
         return len(self.image_ids)
 
     def __getitem__(self, idx):
-
         img = self.load_image(idx)
         annot = self.load_annotations(idx)
         sample = {'img': img, 'annot': annot}
@@ -72,8 +81,8 @@ class CocoDataset(Dataset):
 
     def load_image(self, image_index):
         image_info = self.coco.loadImgs(self.image_ids[image_index])[0]
-        path = os.path.join(self.root_dir, 'images',
-                            self.set_name, image_info['file_name'])
+        path = os.path.join(self.root_dir, self.set_name, image_info['identifier'])
+
         img = cv2.imread(path)
 
         if len(img.shape) == 2:
@@ -89,23 +98,24 @@ class CocoDataset(Dataset):
         # some images appear to miss annotations (like image with id 257034)
         if len(annotations_ids) == 0:
             return annotations
-
+        
         # parse annotations
         coco_annotations = self.coco.loadAnns(annotations_ids)
+        coco_annotations = coco_annotations[0]
         for idx, a in enumerate(coco_annotations):
-
             # some annotations have basically no width / height, skip them
-            if a['bbox'][2] < 1 or a['bbox'][3] < 1:
+            if a['boxcorners'][2] < 1 or a['boxcorners'][3] < 1:
                 continue
 
             annotation = np.zeros((1, 5))
-            annotation[0, :4] = a['bbox']
-            annotation[0, 4] = self.coco_label_to_label(a['category_id'])
+            annotation[0, :4] = a['boxcorners']
+            # annotation[0, 4] = self.coco_label_to_label(a['category_id'])
+            annotation[0, 4] = self.coco_label_to_label(0)
             annotations = np.append(annotations, annotation, axis=0)
 
-        # transform from [x, y, w, h] to [x1, y1, x2, y2]
-        annotations[:, 2] = annotations[:, 0] + annotations[:, 2]
-        annotations[:, 3] = annotations[:, 1] + annotations[:, 3]
+        # # transform from [x, y, w, h] to [x1, y1, x2, y2]
+        # annotations[:, 2] = annotations[:, 0] + annotations[:, 2]
+        # annotations[:, 3] = annotations[:, 1] + annotations[:, 3]
 
         return annotations
 
@@ -113,14 +123,15 @@ class CocoDataset(Dataset):
         return self.coco_labels_inverse[coco_label]
 
     def label_to_coco_label(self, label):
-        return self.coco_labels[label]
+        # return self.coco_labels[label]
+        return self.coco_labels[0]
 
     def image_aspect_ratio(self, image_index):
         image = self.coco.loadImgs(self.image_ids[image_index])[0]
         return float(image['width']) / float(image['height'])
 
     def num_classes(self):
-        return 80
+        return 1
 
 
 if __name__ == '__main__':

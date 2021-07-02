@@ -34,12 +34,12 @@ from utils import EFFICIENTDET, get_state_dict
 from eval import evaluate, evaluate_coco
 
 parser = argparse.ArgumentParser(description='PyTorch ImageNet Training')
-parser.add_argument('--dataset', default='VOC', choices=['VOC', 'COCO'],
-                    type=str, help='VOC or COCO')
+parser.add_argument('--dataset', default='L', choices=['VOC', 'COCO', 'L'],
+                    type=str, help='VOC or COCO or L')
 parser.add_argument(
     '--dataset_root',
-    default='/root/data/VOCdevkit/',
-    help='Dataset root directory path [/root/data/VOCdevkit/, /root/data/coco/]')
+    default='/content/drive/MyDrive/itaz_shoes/',
+    help='Dataset root directory path [/root/data/VOCdevkit/, /root/data/coco/, /content/drive/MyDrive/itaz_shoes/]')
 parser.add_argument('--network', default='efficientdet-d0', type=str,
                     help='efficientdet-[d0, d1, ..]')
 
@@ -97,7 +97,9 @@ def train(train_loader, model, scheduler, optimizer, epoch, args):
     print("{} epoch: \t start training....".format(epoch))
     start = time.time()
     total_loss = []
+
     model.train()
+
     model.module.is_training = True
     model.module.freeze_bn()
     optimizer.zero_grad()
@@ -130,6 +132,10 @@ def train(train_loader, model, scheduler, optimizer, epoch, args):
             for key, value in ans.items():
                 print('    {:15s}: {}'.format(str(key), value))
         iteration += 1
+        break
+        if iteration == 2:
+          iteration = 0
+          break
     scheduler.step(np.mean(total_loss))
     result = {
         'time': time.time() - start,
@@ -181,7 +187,7 @@ def main_worker(gpu, ngpus_per_node, args):
     elif(args.dataset == 'COCO'):
         train_dataset = CocoDataset(
             root_dir=args.dataset_root,
-            set_name='train2017',
+            set_name='train',
             transform=transforms.Compose(
                 [
                     Normalizer(),
@@ -189,13 +195,13 @@ def main_worker(gpu, ngpus_per_node, args):
                     Resizer()]))
         valid_dataset = CocoDataset(
             root_dir=args.dataset_root,
-            set_name='val2017',
+            set_name='val',
             transform=transforms.Compose(
                 [
                     Normalizer(),
                     Resizer()]))
         args.num_class = train_dataset.num_classes()
-
+        
     train_loader = DataLoader(train_dataset,
                               batch_size=args.batch_size,
                               num_workers=args.workers,
@@ -270,7 +276,8 @@ def main_worker(gpu, ngpus_per_node, args):
         optimizer, patience=3, verbose=True)
     cudnn.benchmark = True
 
-    for epoch in range(args.start_epoch, args.num_epoch):
+    # for epoch in range(args.start_epoch, args.num_epoch):
+    for epoch in range(args.start_epoch, 150):
         train(train_loader, model, scheduler, optimizer, epoch, args)
 
         if (epoch + 1) % 5 == 0:
@@ -281,7 +288,7 @@ def main_worker(gpu, ngpus_per_node, args):
             'parser': args,
             'state_dict': get_state_dict(model)
         }
-
+        
         torch.save(
             state,
             os.path.join(
@@ -293,6 +300,7 @@ def main_worker(gpu, ngpus_per_node, args):
 
 def main():
     args = parser.parse_args()
+    
     if(not os.path.exists(os.path.join(args.save_folder, args.dataset, args.network))):
         os.makedirs(os.path.join(args.save_folder, args.dataset, args.network))
     if args.seed is not None:

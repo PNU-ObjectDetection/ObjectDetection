@@ -277,7 +277,7 @@ def evaluate_coco(dataset, model, threshold=0.05):
             scores = scores.cpu()
             labels = labels.cpu()
             boxes = boxes.cpu()
-
+            
             # correct boxes for image scale
             boxes /= scale
 
@@ -292,7 +292,6 @@ def evaluate_coco(dataset, model, threshold=0.05):
                     score = float(scores[box_id])
                     label = int(labels[box_id])
                     box = boxes[box_id, :]
-
                     # scores are sorted, so we can break
                     if score < threshold:
                         break
@@ -342,10 +341,10 @@ if __name__ == '__main__':
     parser = argparse.ArgumentParser(
         description='EfficientDet Training With Pytorch')
     train_set = parser.add_mutually_exclusive_group()
-    parser.add_argument('--dataset', default='VOC', choices=['VOC', 'COCO'],
+    parser.add_argument('--dataset', default='COCO', choices=['VOC', 'COCO'],
                         type=str, help='VOC or COCO')
-    parser.add_argument('--dataset_root', default='/root/data/VOCdevkit/',
-                        help='Dataset root directory path [/root/data/VOCdevkit/, /root/data/coco/]')
+    parser.add_argument('--dataset_root', default='/content/drive/MyDrive/itaz_shoes/',
+                        help='Dataset root directory path [/content/drive/MyDrive/itaz_shoes/,/root/data/VOCdevkit/, /root/data/coco/]')
     parser.add_argument('-t', '--threshold', default=0.4,
                         type=float, help='Visualization threshold')
     parser.add_argument('-it', '--iou_threshold', default=0.5,
@@ -378,6 +377,6 @@ if __name__ == '__main__':
                                      transform=transforms.Compose([Normalizer(), Resizer()]))
         evaluate(valid_dataset, model)
     else:
-        valid_dataset = CocoDataset(root_dir=args.dataset_root, set_name='val2017',
+        valid_dataset = CocoDataset(root_dir=args.dataset_root, set_name='test',
                                     transform=transforms.Compose([Normalizer(), Resizer()]))
         evaluate_coco(valid_dataset, model)
