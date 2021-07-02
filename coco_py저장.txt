@@ -91,7 +91,7 @@ class COCO:
 
     def createIndex(self):
         # create index
-        print('creating index...')
+        # print('creating index...')
         cats = {}
         idx = int(self.dataset['image']['identifier'][9:13])
         # if 'annotations' in self.dataset:
@@ -116,7 +116,7 @@ class COCO:
             #     catToImgs[ann['category_id']].append(ann['image_id'])
             catToImgs[0].append(idx)
 
-        print('index created!')
+        # print('index created!')
 
         # create class members
         self.anns = anns
@@ -174,12 +174,10 @@ class COCO:
                iscrowd (boolean)       : get anns for given crowd label (False or True)
         :return: ids (int array)       : integer array of ann ids
         """
+        idx = imgIds
         imgIds = imgIds if _isArrayLike(imgIds) else [imgIds]
         catIds = catIds if _isArrayLike(catIds) else [catIds]
-        if len(self.dataset) < 3:
-          idx = int(self.dataset['image']['identifier'][9:13])
-        else:
-          idx = int(self.dataset['annotations'][0]['image_id'])
+
         if len(imgIds) == len(catIds) == len(areaRng) == 0:
             anns = self.dataset['regions']
         else:
@@ -198,6 +196,7 @@ class COCO:
             ids = [idx]  # [ann['id'] for ann in anns if ann['iscrowd'] == iscrowd]
         else:
             ids = [idx]  # [ann['id'] for ann in anns]
+        # return ids
         return ids
 
     def getCatIds(self, catNms=[], supNms=[], catIds=[]):
